@@ -4,7 +4,7 @@ This repository contains simulation code, processed data, and generated figures 
 
 **Mobility Heterogeneity in a 2D Gaussian Lattice Polymer: A Dynamic Monte Carlo Study**
 
-arXiv preprint: https://arxiv.org/abs/2606.04002 
+arXiv: https://arxiv.org/abs/2606.04002 
 
 The study uses dynamic Monte Carlo simulations of 2D Gaussian lattice polymers with block-dependent update rates.
 
