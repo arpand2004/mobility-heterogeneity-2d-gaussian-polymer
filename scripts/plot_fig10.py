@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 
 data_file = "data/processed/dcm_N_data.npz"
 
-fig8_file = "figures/Fig8.png"
+fig10_file = "figures/Fig10.png"
 
-dcm_output_file = "data/processed/Fig8_Dcm_values.npz"
-dcm_summary_file = "data/processed/Fig8_Dcm_values_summary.csv"
+dcm_output_file = "data/processed/Fig10_Dcm_values.npz"
+dcm_summary_file = "data/processed/Fig10_Dcm_values_summary.csv"
 
 
 N_list = [20, 40, 60, 80, 100]
@@ -165,7 +165,7 @@ if __name__ == "__main__":
         comments="",
     )
 
-    # Plot Fig. 8
+    # Plot Fig. 10
     fig, ax = plt.subplots(figsize=(6.8, 5.0))
 
     N_guide = np.linspace(min(N_list), max(N_list), 300)
@@ -236,12 +236,12 @@ if __name__ == "__main__":
     ax.grid(False)
 
     fig.tight_layout()
-    fig.savefig(fig8_file, dpi=800, bbox_inches="tight")
+    fig.savefig(fig10_file, dpi=800, bbox_inches="tight")
     plt.show()
     plt.close(fig)
 
     print("\nSaved figure:")
-    print(fig8_file)
+    print(fig10_file)
 
     print("\nSaved extracted Dcm data:")
     print(dcm_output_file)

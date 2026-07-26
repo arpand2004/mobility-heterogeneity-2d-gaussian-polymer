@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 data_file = "data/processed/block_msd_data.npz"
 
 fig6_file = "figures/Fig6.png"
-fig7_file = "figures/Fig7.png"
+fig8_file = "figures/Fig8.png"
 
 rate_list = [1.0, 2.0, 4.0]
 
@@ -220,9 +220,9 @@ def plot_fig6(data):
 
     print(f"Saved: {fig6_file}")
 
-# Fig. 7: A_MSD(t)
+# Fig. 8: A_MSD(t)
 
-def plot_fig7(data):
+def plot_fig8(data):
     fig, ax = plt.subplots(figsize=(7.6, 4.9))
 
     ax.axhline(
@@ -290,11 +290,11 @@ def plot_fig7(data):
     )
 
     fig.tight_layout()
+    fig.savefig(fig8_file, dpi=800, bbox_inches="tight")
     plt.show()
-    fig.savefig(fig7_file, dpi=800, bbox_inches="tight")
     plt.close(fig)
 
-    print(f"Saved: {fig7_file}")
+    print(f"Saved: {fig8_file}")
 
 if __name__ == "__main__":
     os.makedirs("figures", exist_ok=True)
@@ -302,6 +302,6 @@ if __name__ == "__main__":
     data = np.load(data_file)
 
     plot_fig6(data)
-    plot_fig7(data)
+    plot_fig8(data)
 
     print("Done.")
