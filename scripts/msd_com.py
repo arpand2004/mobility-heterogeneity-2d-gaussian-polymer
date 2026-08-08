@@ -16,17 +16,11 @@ max_scaled_time = 20.0
 n_sample_points = 700
 base_seed = 12345
 
-fit_windows = [
-    (0.1, 10.0),
-    (1.0, 10.0),
-]
-
 data_dir = Path("data/processed")
 figure_dir = Path("figures")
 
 npz_file = data_dir / "block_com_msd_data.npz"
 summary_csv_file = data_dir / "block_com_msd_summary.csv"
-diffusion_csv_file = data_dir / "block_com_diffusion_coefficients.csv"
 png_file = figure_dir / "Fig9.png"
 
 color_A = "#ff7f0e"
@@ -37,6 +31,7 @@ moves = np.array(
     [[1, 0], [-1, 0], [0, 1], [0, -1]],
     dtype=np.int32,
 )
+
 
 half = N // 2
 A_indices = np.arange(half)
@@ -81,13 +76,6 @@ THREE_MONOMER_DICT = build_three_monomer_dictionary()
 
 def rho_key(rho):
     return str(float(rho)).replace(".", "p")
-
-
-def window_key(window_min, window_max):
-    return (
-        f"{str(float(window_min)).replace('.', 'p')}_"
-        f"{str(float(window_max)).replace('.', 'p')}"
-    )
 
 
 def init_gaussian_chain(rng):
@@ -262,59 +250,6 @@ def simulate_one_run(arguments):
     }
 
 
-def sem(values):
-    values = np.asarray(values, dtype=np.float64)
-    finite = np.isfinite(values)
-    count = np.count_nonzero(finite)
-
-    if count == 0:
-        return np.nan
-
-    if count == 1:
-        return 0.0
-
-    return np.std(values[finite], ddof=1) / np.sqrt(count)
-
-
-# Extract values of D_A, D_B and D_cm for time lag windows [0.1,10] and [1,10]
-
-def fit_diffusion_coefficients(
-    t_sweep,
-    t_scaled,
-    msd_all_runs,
-    window_min,
-    window_max,
-):
-    t_sweep = np.asarray(t_sweep, dtype=np.float64)
-    t_scaled = np.asarray(t_scaled, dtype=np.float64)
-    msd_all_runs = np.asarray(msd_all_runs, dtype=np.float64)
-
-    mask = (
-        np.isfinite(t_sweep)
-        & np.isfinite(t_scaled)
-        & (t_scaled >= window_min)
-        & (t_scaled <= window_max)
-    )
-
-    if np.count_nonzero(mask) < 2:
-        raise ValueError(
-            f"Not enough points in fitting window [{window_min}, {window_max}]."
-        )
-
-    D_values = np.full(msd_all_runs.shape[0], np.nan, dtype=np.float64)
-
-    for run_index, msd in enumerate(msd_all_runs):
-        valid = mask & np.isfinite(msd)
-
-        if np.count_nonzero(valid) < 2:
-            continue
-
-        slope, _ = np.polyfit(t_sweep[valid], msd[valid], 1)
-        D_values[run_index] = slope / 4.0
-
-    return D_values
-
-
 def run_simulations():
     all_results = {}
     n_processes = min(max(1, cpu_count() - 1), n_runs)
@@ -371,57 +306,7 @@ def run_simulations():
     return all_results
 
 
-def extract_diffusion_results(all_results):
-    diffusion_results = {}
-
-    for window_min, window_max in fit_windows:
-        print(
-            f"\nWindow: {window_min:g} <= "
-            f"Delta t_sweep/N^2 <= {window_max:g}"
-        )
-
-        for rho in rho_list:
-            data = all_results[rho]
-
-            D_A = fit_diffusion_coefficients(
-                data["t_sweep"],
-                data["t_scaled"],
-                data["A_all"],
-                window_min,
-                window_max,
-            )
-            D_B = fit_diffusion_coefficients(
-                data["t_sweep"],
-                data["t_scaled"],
-                data["B_all"],
-                window_min,
-                window_max,
-            )
-            D_cm = fit_diffusion_coefficients(
-                data["t_sweep"],
-                data["t_scaled"],
-                data["full_all"],
-                window_min,
-                window_max,
-            )
-
-            diffusion_results[
-                (rho, window_min, window_max)
-            ] = {
-                "D_A": D_A,
-                "D_B": D_B,
-                "D_cm": D_cm,
-            }
-
-            print(f"rho = {rho:g}")
-            print(f"  D_A  = {np.nanmean(D_A):.8e} +/- {sem(D_A):.2e}")
-            print(f"  D_B  = {np.nanmean(D_B):.8e} +/- {sem(D_B):.2e}")
-            print(f"  D_cm = {np.nanmean(D_cm):.8e} +/- {sem(D_cm):.2e}")
-
-    return diffusion_results
-
-
-def save_results(all_results, diffusion_results):
+def save_results(all_results):
     data_dir.mkdir(parents=True, exist_ok=True)
 
     npz_data = {
@@ -431,11 +316,9 @@ def save_results(all_results, diffusion_results):
         "n_runs": np.array(n_runs),
         "max_scaled_time": np.array(max_scaled_time),
         "n_sample_points": np.array(n_sample_points),
-        "fit_windows": np.asarray(fit_windows, dtype=np.float64),
     }
 
     summary_rows = []
-    diffusion_rows = []
 
     for rho in rho_list:
         key = rho_key(rho)
@@ -468,38 +351,6 @@ def save_results(all_results, diffusion_results):
                 ]
             )
 
-        for window_min, window_max in fit_windows:
-            window = window_key(window_min, window_max)
-            result = diffusion_results[
-                (rho, window_min, window_max)
-            ]
-
-            for label in ("D_A", "D_B", "D_cm"):
-                values = result[label]
-                npz_data[
-                    f"{label}_all_rho_{key}_window_{window}"
-                ] = values
-                npz_data[
-                    f"{label}_mean_rho_{key}_window_{window}"
-                ] = np.array(np.nanmean(values))
-                npz_data[
-                    f"{label}_sem_rho_{key}_window_{window}"
-                ] = np.array(sem(values))
-
-            diffusion_rows.append(
-                [
-                    rho,
-                    window_min,
-                    window_max,
-                    np.nanmean(result["D_A"]),
-                    sem(result["D_A"]),
-                    np.nanmean(result["D_B"]),
-                    sem(result["D_B"]),
-                    np.nanmean(result["D_cm"]),
-                    sem(result["D_cm"]),
-                ]
-            )
-
     np.savez(npz_file, **npz_data)
 
     np.savetxt(
@@ -511,19 +362,6 @@ def save_results(all_results, diffusion_results):
             "A_COM_MSD_mean,A_COM_MSD_sem,"
             "B_COM_MSD_mean,B_COM_MSD_sem,"
             "full_COM_MSD_mean,full_COM_MSD_sem"
-        ),
-        comments="",
-    )
-
-    np.savetxt(
-        diffusion_csv_file,
-        np.asarray(diffusion_rows, dtype=np.float64),
-        delimiter=",",
-        header=(
-            "rho,fit_scaled_min,fit_scaled_max,"
-            "D_A_mean,D_A_sem,"
-            "D_B_mean,D_B_sem,"
-            "D_cm_mean,D_cm_sem"
         ),
         comments="",
     )
@@ -761,14 +599,12 @@ def main():
     figure_dir.mkdir(parents=True, exist_ok=True)
 
     all_results = run_simulations()
-    diffusion_results = extract_diffusion_results(all_results)
-    save_results(all_results, diffusion_results)
+    save_results(all_results)
     plot_figure(all_results)
 
     print("\nSaved:")
     print(npz_file)
     print(summary_csv_file)
-    print(diffusion_csv_file)
     print(png_file)
     print("\nDone.")
 

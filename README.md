@@ -18,7 +18,7 @@ The study uses dynamic Monte Carlo simulations of 2D Gaussian lattice polymers w
 │       ├── dcm_N_data.npz                        # processed COM-MSD data used to generate Fig. 10
 │       ├── block_com_msd_data.npz                # processed block-COM MSD data used to generate Fig. 9
 │       ├── block_com_msd_summary.csv             # summary table for the block-COM MSD data
-│       ├── block_com_diffusion_coefficients.csv  # extracted D_A, D_B, and D_cm values for Fig. 9
+│       ├── block_com_diffusion_coefficients.csv  # short- and long-time D_A, D_B, and D_cm values from Fig. 9
 │       ├── Fig10_Dcm_values.npz                  # extracted D_cm values used in Fig. 10
 │       └── Fig10_Dcm_values_summary.csv          # summary table for the extracted D_cm values
 │
@@ -37,7 +37,8 @@ The study uses dynamic Monte Carlo simulations of 2D Gaussian lattice polymers w
 │   ├── block_msd.py                              # full simulation script generating data for Figs. 6 and 8
 │   ├── block_msd_2.py                            # plotting script generating Fig. 7 from block_msd_data.npz
 │   ├── Dcm_N.py                                  # full simulation script generating data for Fig. 10
-│   ├── msd_com.py                                # full simulation, diffusion extraction, and plotting script for Fig. 9
+│   ├── msd_com.py                                # full simulation and plotting script generating Fig. 9 and block-COM MSD data
+│   ├── fig9_diffusion_analysis.py                # local-slope analysis and short- and long-time diffusion-coefficient extraction for Fig. 9
 │   ├── plot_fig6_fig8.py                         # plotting script for Figs. 6 and 8 from block_msd_data.npz
 │   └── plot_fig10.py                             # plotting and D_cm extraction script for Fig. 10 from dcm_N_data.npz
 │
